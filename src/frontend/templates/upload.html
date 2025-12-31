@@ -1,30 +1,492 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>upload_images</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片上传</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* 缩小界面至80% */
+        .upload-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            transition: transform 0.3s ease;
+            transform: scale(0.8); /* 缩小到80% */
+            transform-origin: center; /* 从中心缩放 */
+        }
+
+        .upload-container:hover {
+            transform: scale(0.8) translateY(-5px); /* 保持缩放比例的hover效果 */
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 600;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 文件上传样式 */
+        .file-upload {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-label:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        /* 文件已选择样式 */
+        .file-label.file-selected {
+            border-style: solid;
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+
+        .file-label.file-selected:hover {
+            border-color: #218838;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .file-icon {
+            font-size: 24px;
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        /* 文件已选择时的图标颜色 */
+        .file-selected .file-icon {
+            color: #28a745;
+        }
+
+        /* 文件名显示 */
+        .file-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* 输入框样式 */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-label {
+            font-size: 14px;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .txt_input {
+            padding: 12px 15px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .txt_input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .txt_input::placeholder {
+            color: #adb5bd;
+        }
+
+        /* 提交按钮样式 */
+        .button-new {
+            padding: 14px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button-new:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .button-new:active {
+            transform: translateY(0);
+        }
+
+        /* 按钮加载状态 - 增强等待显示 */
+        .button-new.loading {
+            background: linear-gradient(90deg, #8e97d4, #9f7aea);
+            cursor: not-allowed;
+        }
+
+        .button-new.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* 全屏加载遮罩 - 增强等待显示 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(102, 126, 234, 0.2);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 提示消息样式 - 居中显示 */
+        .message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) translateY(10px);
+            padding: 20px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 10000;
+            min-width: 300px;
+            max-width: 90%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .message.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) translateY(0);
+        }
+
+        .message.success {
+            background-color: rgba(40, 167, 69, 0.95);
+            color: white;
+            border: 1px solid #28a745;
+        }
+
+        .message.error {
+            background-color: rgba(220, 53, 69, 0.95);
+            color: white;
+            border: 1px solid #dc3545;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            .upload-container {
+                padding: 25px 20px;
+                transform: scale(0.9); /* 移动端适当放大一点 */
+            }
+            
+            .upload-container:hover {
+                transform: scale(0.9) translateY(-5px);
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .file-label {
+                padding: 12px;
+            }
+            
+            .message {
+                padding: 15px 20px;
+                font-size: 14px;
+                min-width: 250px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>upload images</h1>
-    <form action="" enctype='multipart/form-data' method='POST'>
-        <input type="file" name="upload_file" style="margin-top:40px;"/>
-        <br>
-        <i>选项1: </i>
-        <input type="text" class="txt_input" name="选项1"  value="" style="margin-top:20px;"/>
-        <br>
-        <i>选项2: </i>
-        <input type="text" class="txt_input" name="选项2"  value="" style="margin-top:20px;"/>
-        <br>
-        <i>选项3: </i>
-        <input type="text" class="txt_input" name="选项3"  value="" style="margin-top:20px;"/>
-        <br>
-        <i>选项4: </i>
-        <input type="text" class="txt_input" name="选项4"  value="" style="margin-top:20px;"/>
-        <br>
-        <i>选项5: </i>
-        <input type="text" class="txt_input" name="选项5"  value="" style="margin-top:20px;"/>
-        <br>
-        <input type="submit" value="提交" class="button-new" style="margin-top:20px;"/>
-    </form>
+    <!-- 加载遮罩层 -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="loading-text">正在处理，请稍候...</div>
+        </div>
+    </div>
+
+    <div class="upload-container">
+        <h1>图片上传</h1>
+        <form id="uploadForm" action="" enctype='multipart/form-data' method='POST'>
+            <!-- 文件上传区域 -->
+            <div class="file-upload">
+                <input type="file" name="upload_file" id="upload_file" class="file-input" accept="image/*"/>
+                <label for="upload_file" class="file-label">
+                    <span class="file-icon">📁</span>
+                    <span class="file-text">点击选择图片文件</span>
+                    <span class="file-name" style="display: none;"></span>
+                </label>
+            </div>
+
+            <!-- 选项输入区域 -->
+            <div class="input-group">
+                <label class="input-label">选项1</label>
+                <input type="text" class="txt_input" name="选项1" placeholder="请输入选项1内容"/>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">选项2</label>
+                <input type="text" class="txt_input" name="选项2" placeholder="请输入选项2内容"/>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">选项3</label>
+                <input type="text" class="txt_input" name="选项3" placeholder="请输入选项3内容"/>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">选项4</label>
+                <input type="text" class="txt_input" name="选项4" placeholder="请输入选项4内容"/>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">选项5</label>
+                <input type="text" class="txt_input" name="选项5" placeholder="请输入选项5内容"/>
+            </div>
+
+            <!-- 提交按钮 -->
+            <input type="submit" value="提交" class="button-new"/>
+            
+            <!-- 提示消息区域 -->
+            <div id="message" class="message"></div>
+        </form>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const fileInput = document.getElementById('upload_file');
+        const fileLabel = document.querySelector('.file-label');
+        const fileText = document.querySelector('.file-text');
+        const fileName = document.querySelector('.file-name');
+        const uploadForm = document.getElementById('uploadForm');
+        const submitButton = document.querySelector('.button-new');
+        const message = document.getElementById('message');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        // 文件选择事件 - 改变边框样式并显示文件名
+        fileInput.addEventListener('change', function(e) {
+            const files = this.files;
+            if (files.length > 0) {
+                // 添加已选择样式
+                fileLabel.classList.add('file-selected');
+                // 隐藏默认文本，显示文件名
+                fileText.style.display = 'none';
+                fileName.style.display = 'inline';
+                fileName.textContent = files[0].name;
+                
+                // 如果文件名过长，进行截断
+                if (files[0].name.length > 20) {
+                    const name = files[0].name;
+                    const ext = name.split('.').pop();
+                    const mainName = name.substring(0, 15);
+                    fileName.textContent = `${mainName}...${ext}`;
+                }
+            } else {
+                // 恢复默认样式
+                fileLabel.classList.remove('file-selected');
+                fileText.style.display = 'inline';
+                fileName.style.display = 'none';
+            }
+        });
+
+        // 表单提交处理
+        uploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault(); // 阻止默认提交
+            
+            // 验证是否选择了文件
+            if (!fileInput.files.length) {
+                showMessage('请先选择要上传的图片文件', 'error');
+                return;
+            }
+
+            // 设置按钮加载状态
+            submitButton.classList.add('loading');
+            submitButton.value = '提交中...';
+            submitButton.disabled = true;
+            
+            // 显示全屏加载遮罩
+            loadingOverlay.classList.add('show');
+            
+            // 清空之前的消息
+            hideMessage();
+
+            try {
+                // 创建FormData对象
+                const formData = new FormData(this);
+                
+                // 发送AJAX请求到后端
+                const response = await fetch(this.action || window.location.href, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                // 解析响应（根据后端返回格式调整，这里假设返回JSON）
+                const result = await response.json();
+                
+                // 根据后端返回结果显示消息
+                if (result.success) {
+                    showMessage(result.message || '上传成功！页面即将刷新...', 'success');
+                    // 成功后延迟刷新页面（让用户看到成功提示）
+                    setTimeout(() => {
+                        window.location.reload(true); // 强制刷新页面
+                    }, 1500);
+                } else {
+                    showMessage(result.message || '上传失败，请重试', 'error');
+                }
+
+            } catch (error) {
+                console.error('上传出错:', error);
+                showMessage('网络错误，上传失败', 'error');
+            } finally {
+                // 恢复按钮状态
+                submitButton.classList.remove('loading');
+                submitButton.value = '提交';
+                submitButton.disabled = false;
+                
+                // 隐藏加载遮罩
+                loadingOverlay.classList.remove('show');
+            }
+        });
+
+        // 显示提示消息（居中显示）
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = `message ${type} show`;
+            
+            // 错误消息5秒后自动隐藏，成功消息不需要（因为会刷新）
+            if (type === 'error') {
+                setTimeout(() => {
+                    hideMessage();
+                }, 5000);
+            }
+        }
+
+        // 隐藏提示消息
+        function hideMessage() {
+            message.className = 'message';
+        }
+    </script>
 </body>
 </html>

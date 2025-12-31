@@ -6,15 +6,17 @@ from mysql.connector import Error
 
 
 class SQL:
-    def __init__(self, host: str, user: str, password: str, database: str) -> None:
+    def __init__(self, host: str, user: str, password: str, database: str, table: str) -> None:
         self.host = host
         self.database = database
         self.user = user
         self.password = password
         self.port = 3306
+        self.table = table
         self.conn = None
         self.charset = 'utf8mb4'
         self.cursor = None
+
 
     def connect(self) -> bool:
         """connect to the database"""
