@@ -12,6 +12,14 @@ def GetCityAdcode(city) -> int:
         if row[0] == str(city):
             return row[1]
 
+def GetCityName() -> list:
+    wb = load_workbook(CITY_FILE_NAME)
+    ws = wb[SHEET_NAME] 
+    city_list = []
+    for row in ws.iter_rows(values_only=True):
+        city_list.append(row[0])
+    return city_list
+
 def GetWeatherApiKey() -> str:
     return open("backend/weather/.api_key").read()
 

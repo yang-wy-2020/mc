@@ -57,6 +57,75 @@
             border-radius: 3px;
         }
 
+        /* 城市选择器样式 */
+        .city-selector {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .city-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 16px;
+        }
+
+        .city-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .city-select:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .city-loading {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        .city-loading.show {
+            display: block;
+        }
+
+        /* 定位提示样式 */
+        .location-tip {
+            text-align: center;
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: rgba(102, 126, 234, 0.05);
+            border-radius: 6px;
+            display: none;
+        }
+
+        .location-tip.show {
+            display: block;
+        }
+
         /* 加载状态样式 */
         .loading {
             display: flex;
@@ -195,6 +264,17 @@
             <h1>实时天气信息</h1>
         </div>
 
+        <!-- 定位提示 -->
+        <div id="locationTip" class="location-tip">正在通过地理位置获取您所在城市...</div>
+
+        <!-- 城市选择器 -->
+        <div class="city-selector">
+            <select id="citySelect" class="city-select" disabled>
+                <option value="">加载城市列表中...</option>
+            </select>
+            <div id="cityLoading" class="city-loading"></div>
+        </div>
+
         <!-- 加载状态 -->
         <div id="loading" class="loading">
             <div class="loading-spinner"></div>
@@ -245,6 +325,9 @@
         const weatherContentEl = document.getElementById('weatherContent');
         const errorTextEl = document.getElementById('errorText');
         const errorDescEl = document.getElementById('errorDesc');
+        const citySelectEl = document.getElementById('citySelect');
+        const cityLoadingEl = document.getElementById('cityLoading');
+        const locationTipEl = document.getElementById('locationTip');
         
         // 天气数据展示元素
         const cityNameEl = document.getElementById('cityName');
@@ -255,124 +338,245 @@
         const windDirectionEl = document.getElementById('windDirection');
         const windPowerEl = document.getElementById('windPower');
 
-        // 配置项 - 修改此处为你的后端接口地址
+        // 配置项
         const API_CONFIG = {
-            // 替换为实际的后端接口URL
-            url: '/api/weather', 
-            // 请求方式 (GET/POST)
-            method: 'GET',      
-            // 请求头（根据后端要求调整）
+            weatherUrl: '/api/weather/view',
+            cityListUrl: '/api/weather/get_citys',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             }
         };
 
-        /**
-         * 初始化页面：请求后端JSON数据并渲染
-         */
-        async function initWeatherPage() {
-            try {
-                // 1. 请求后端接口获取JSON数据
-                const response = await fetch(API_CONFIG.url, {
-                    method: API_CONFIG.method,
-                    headers: API_CONFIG.headers
-                });
+        // 存储城市列表和当前选中城市
+        let cityList = [];
+        let currentCityName = '';
 
-                // 2. 检查HTTP响应状态
-                if (!response.ok) {
-                    throw new Error(`HTTP请求失败: ${response.status} ${response.statusText}`);
+        /**
+         * 页面初始化入口
+         */
+        async function initPage() {
+            try {
+                // 1. 优先加载城市列表
+                await loadCityList();
+                
+                // 2. 获取当前地理位置（自动定位）
+                await getCurrentLocation();
+                
+                // 3. 加载默认天气数据（列表第一个城市）
+                if (currentCityName) {
+                    await loadWeatherData(currentCityName);
+                } else if (cityList.length > 0) {
+                    currentCityName = cityList[0];
+                    await loadWeatherData(currentCityName);
                 }
 
-                // 3. 解析JSON数据（核心：仅解析后端返回的JSON）
-                const jsonData = await response.json();
-                console.log('后端返回的JSON数据:', jsonData);
-
-                // 4. 验证JSON数据结构有效性
-                validateWeatherData(jsonData);
-
-                // 5. 渲染JSON数据到页面
-                renderWeatherData(jsonData.lives[0]);
-
-                // 6. 切换到成功状态
-                loadingEl.style.display = 'none';
-                errorEl.style.display = 'none';
-                weatherContentEl.style.display = 'block';
-
             } catch (error) {
-                // 异常处理：显示错误信息
-                console.error('数据处理失败:', error);
-                loadingEl.style.display = 'none';
-                weatherContentEl.style.display = 'none';
-                errorEl.style.display = 'block';
-                
-                // 显示错误详情
-                errorTextEl.textContent = error.message || '解析数据失败';
-                errorDescEl.textContent = error.cause || '请检查后端接口返回格式';
+                console.error('页面初始化失败:', error);
+                showError('初始化失败', error.message || '请手动选择城市查询天气');
             }
         }
 
         /**
-         * 验证后端返回的JSON数据结构
-         * @param {Object} data 后端返回的JSON对象
+         * 加载后端城市列表（适配纯字符串列表）
+         */
+        async function loadCityList() {
+            try {
+                cityLoadingEl.classList.add('show');
+                
+                const response = await fetch(API_CONFIG.cityListUrl, {
+                    method: API_CONFIG.method,
+                    headers: API_CONFIG.headers
+                });
+
+                if (!response.ok) {
+                    throw new Error(`城市列表请求失败 [${response.status}]`);
+                }
+
+                cityList = await response.json();
+                console.log('后端返回的城市列表:', cityList);
+
+                // 清空下拉框并填充默认选项
+                citySelectEl.innerHTML = '';
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '请选择城市';
+                citySelectEl.appendChild(defaultOption);
+
+                // 动态构建下拉选项（纯字符串列表）
+                cityList.forEach(cityName => {
+                    const option = document.createElement('option');
+                    option.value = cityName; // 城市名作为value
+                    option.textContent = cityName; // 城市名作为显示文本
+                    citySelectEl.appendChild(option);
+                });
+
+                // 启用城市选择器
+                citySelectEl.disabled = false;
+
+                // 绑定城市切换事件（核心：传递动态城市名）
+                citySelectEl.addEventListener('change', function() {
+                    const selectedCity = this.value;
+                    if (selectedCity && selectedCity !== '') {
+                        currentCityName = selectedCity;
+                        console.log('当前选中城市:', selectedCity);
+                        loadWeatherData(selectedCity); // 触发天气动态刷新
+                    }
+                });
+
+            } catch (error) {
+                console.error('加载城市列表失败:', error);
+                citySelectEl.innerHTML = '<option value="">加载城市列表失败</option>';
+                throw error;
+            } finally {
+                cityLoadingEl.classList.remove('show');
+            }
+        }
+
+        /**
+         * 获取当前地理位置（浏览器定位）
+         */
+        async function getCurrentLocation() {
+            // 浏览器不支持定位时直接返回
+            if (!navigator.geolocation) {
+                console.log('当前浏览器不支持地理位置定位');
+                return;
+            }
+
+            try {
+                locationTipEl.classList.add('show');
+
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(
+                        resolve, 
+                        reject, 
+                        { timeout: 10000, maximumAge: 300000 } // 超时10秒，缓存5分钟
+                    );
+                });
+
+                const { latitude, longitude } = position.coords;
+                console.log('当前定位经纬度:', latitude, longitude);
+
+                // 可扩展：经纬度转城市名称（需后端接口支持）
+                if (cityList.length > 0) {
+                    // 暂不处理，可手动匹配
+                }
+
+            } catch (error) {
+                console.log('定位失败:', error.message);
+            } finally {
+                locationTipEl.classList.remove('show');
+            }
+        }
+
+        /**
+         * 加载指定城市的天气数据（核心：动态刷新）
+         * @param {string} cityName 选中的城市名称
+         */
+        async function loadWeatherData(cityName) {
+            try {
+                // 显示加载状态
+                loadingEl.style.display = 'flex';
+                errorEl.style.display = 'none';
+                weatherContentEl.style.display = 'none';
+
+                // 1. 中文编码 + 时间戳：解决中文乱码和缓存问题
+                const encodedCityName = encodeURIComponent(cityName);
+                const timestamp = Date.now(); // 时间戳确保每次请求唯一，规避缓存
+                // 2. 参数名使用 city（与后端标准参数匹配，同时后端兼容 adcode）
+                const weatherUrl = `${API_CONFIG.weatherUrl}${API_CONFIG.weatherUrl.includes('?') ? '&' : '?'}city=${encodedCityName}&_t=${timestamp}`;
+
+                // 3. 禁用缓存，强制发起新请求
+                const response = await fetch(weatherUrl, {
+                    method: API_CONFIG.method,
+                    headers: API_CONFIG.headers,
+                    cache: 'no-cache' // 禁用浏览器缓存
+                });
+
+                if (!response.ok) {
+                    throw new Error(`天气请求失败 [${response.status}] ${response.statusText}`);
+                }
+
+                // 解析动态天气数据
+                const jsonData = await response.json();
+                console.log(`【${cityName}】动态天气数据:`, jsonData);
+
+                // 验证数据结构
+                validateWeatherData(jsonData);
+
+                // 渲染天气数据到页面
+                renderWeatherData(jsonData.lives[0]);
+
+                // 同步下拉框选中状态
+                const weatherData = jsonData.lives[0];
+                if (weatherData && weatherData.city) {
+                    citySelectEl.value = weatherData.city;
+                }
+
+                // 显示天气内容，隐藏加载状态
+                loadingEl.style.display = 'none';
+                weatherContentEl.style.display = 'block';
+
+            } catch (error) {
+                console.error(`加载 ${cityName} 天气失败:`, error);
+                showError('获取天气失败', error.message || '请选择其他城市重试');
+            }
+        }
+
+        /**
+         * 验证天气数据结构有效性
          */
         function validateWeatherData(data) {
-            // 检查核心字段是否存在
             const requiredFields = ['status', 'lives'];
             const missingFields = requiredFields.filter(field => !data.hasOwnProperty(field));
             
             if (missingFields.length > 0) {
-                throw new Error('后端返回数据结构不完整', {
-                    cause: `缺失字段: ${missingFields.join(', ')}`
-                });
+                throw new Error('天气数据结构不完整', { cause: `缺失字段: ${missingFields.join(', ')}` });
             }
 
-            // 检查状态是否成功
             if (data.status !== '1') {
-                throw new Error('后端返回错误状态', {
-                    cause: `info: ${data.info || '未知错误'}, infocode: ${data.infocode || '无'}`
-                });
+                throw new Error('后端返回错误状态', { cause: `info: ${data.info || '未知'}, infocode: ${data.infocode || '无'}` });
             }
 
-            // 检查lives数组是否有数据
             if (!Array.isArray(data.lives) || data.lives.length === 0) {
-                throw new Error('天气数据为空', { cause: 'lives数组为空' });
+                throw new Error('天气数据为空');
             }
 
-            // 检查lives第一项的核心字段
             const liveData = data.lives[0];
             const liveRequiredFields = ['province', 'city', 'weather', 'temperature', 'humidity', 'winddirection', 'windpower', 'reporttime'];
             const liveMissingFields = liveRequiredFields.filter(field => !liveData.hasOwnProperty(field));
             
             if (liveMissingFields.length > 0) {
-                throw new Error('天气详情数据不完整', {
-                    cause: `缺失字段: ${liveMissingFields.join(', ')}`
-                });
+                throw new Error('天气详情不完整', { cause: `缺失字段: ${liveMissingFields.join(', ')}` });
             }
         }
 
         /**
-         * 将JSON数据渲染到页面
-         * @param {Object} weatherData lives数组中的单条天气数据
+         * 渲染天气数据到页面
          */
         function renderWeatherData(weatherData) {
-            // 渲染城市信息
             cityNameEl.textContent = `${weatherData.province} ${weatherData.city}`;
             reportTimeEl.textContent = `数据更新时间: ${weatherData.reporttime}`;
-            
-            // 渲染天气状况
             weatherDescEl.textContent = weatherData.weather;
-            
-            // 渲染具体气象数据（带单位）
             temperatureEl.textContent = `${weatherData.temperature}°C`;
             humidityEl.textContent = `${weatherData.humidity}%`;
             windDirectionEl.textContent = weatherData.winddirection;
             windPowerEl.textContent = `${weatherData.windpower}级`;
         }
 
-        // 页面加载完成后自动执行
-        document.addEventListener('DOMContentLoaded', function() {
-            initWeatherPage();
-        });
+        /**
+         * 统一错误展示
+         */
+        function showError(title, desc) {
+            loadingEl.style.display = 'none';
+            weatherContentEl.style.display = 'none';
+            errorEl.style.display = 'block';
+            errorTextEl.textContent = title;
+            errorDescEl.textContent = desc;
+        }
+
+        // 页面加载完成后自动初始化
+        document.addEventListener('DOMContentLoaded', initPage);
     </script>
 </body>
 </html>
