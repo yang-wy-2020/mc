@@ -110,22 +110,6 @@
             display: block;
         }
 
-        /* 定位提示样式 */
-        .location-tip {
-            text-align: center;
-            font-size: 14px;
-            color: #667eea;
-            margin-bottom: 10px;
-            padding: 8px;
-            background-color: rgba(102, 126, 234, 0.05);
-            border-radius: 6px;
-            display: none;
-        }
-
-        .location-tip.show {
-            display: block;
-        }
-
         /* 加载状态样式 */
         .loading {
             display: flex;
@@ -264,9 +248,6 @@
             <h1>实时天气信息</h1>
         </div>
 
-        <!-- 定位提示 -->
-        <div id="locationTip" class="location-tip">正在通过地理位置获取您所在城市...</div>
-
         <!-- 城市选择器 -->
         <div class="city-selector">
             <select id="citySelect" class="city-select" disabled>
@@ -327,7 +308,6 @@
         const errorDescEl = document.getElementById('errorDesc');
         const citySelectEl = document.getElementById('citySelect');
         const cityLoadingEl = document.getElementById('cityLoading');
-        const locationTipEl = document.getElementById('locationTip');
         
         // 天气数据展示元素
         const cityNameEl = document.getElementById('cityName');
@@ -360,15 +340,18 @@
                 // 1. 优先加载城市列表
                 await loadCityList();
                 
-                // 2. 获取当前地理位置（自动定位）
-                await getCurrentLocation();
-                
-                // 3. 加载默认天气数据（列表第一个城市）
-                if (currentCityName) {
-                    await loadWeatherData(currentCityName);
-                } else if (cityList.length > 0) {
-                    currentCityName = cityList[0];
-                    await loadWeatherData(currentCityName);
+                // 2. 加载默认天气数据（上海）
+                const defaultCity = '上海市';
+                if (cityList.includes(defaultCity)) {
+                    currentCityName = defaultCity;
+                    citySelectEl.value = defaultCity;
+                    await loadWeatherData(defaultCity);
+                // } else if (cityList.length > 0) {
+                //     // 如果城市列表中没有上海，则使用第一个城市
+                //     cityList[0] = '上海市'
+                //     currentCityName = cityList[0];
+                //     citySelectEl.value = cityList[0];
+                //     await loadWeatherData(cityList[0]);
                 }
 
             } catch (error) {
@@ -434,42 +417,6 @@
         }
 
         /**
-         * 获取当前地理位置（浏览器定位）
-         */
-        async function getCurrentLocation() {
-            // 浏览器不支持定位时直接返回
-            if (!navigator.geolocation) {
-                console.log('当前浏览器不支持地理位置定位');
-                return;
-            }
-
-            try {
-                locationTipEl.classList.add('show');
-
-                const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(
-                        resolve, 
-                        reject, 
-                        { timeout: 10000, maximumAge: 300000 } // 超时10秒，缓存5分钟
-                    );
-                });
-
-                const { latitude, longitude } = position.coords;
-                console.log('当前定位经纬度:', latitude, longitude);
-
-                // 可扩展：经纬度转城市名称（需后端接口支持）
-                if (cityList.length > 0) {
-                    // 暂不处理，可手动匹配
-                }
-
-            } catch (error) {
-                console.log('定位失败:', error.message);
-            } finally {
-                locationTipEl.classList.remove('show');
-            }
-        }
-
-        /**
          * 加载指定城市的天气数据（核心：动态刷新）
          * @param {string} cityName 选中的城市名称
          */
@@ -506,12 +453,6 @@
 
                 // 渲染天气数据到页面
                 renderWeatherData(jsonData.lives[0]);
-
-                // 同步下拉框选中状态
-                const weatherData = jsonData.lives[0];
-                if (weatherData && weatherData.city) {
-                    citySelectEl.value = weatherData.city;
-                }
 
                 // 显示天气内容，隐藏加载状态
                 loadingEl.style.display = 'none';
