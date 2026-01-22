@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>智能穿搭助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #f43f5e;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #475569;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: calc(70px + var(--safe-bottom));
+        }
+
+        /* 顶部导航栏 - 简化版 */
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* 底部导航栏 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 0;
+            padding-bottom: calc(0.5rem + var(--safe-bottom));
+            z-index: 100;
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+            min-width: 70px;
+        }
+
+        .bottom-nav-item.active {
+            color: var(--primary);
+        }
+
+        .bottom-nav-item:active {
+            transform: scale(0.95);
+        }
+
+        .bottom-nav-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .bottom-nav-label {
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        /* 主内容 */
+        .main-content {
+            padding-top: 60px;
+            min-height: 100vh;
+        }
+
+        /* 英雄区域 */
+        .hero {
+            padding: 1.5rem 1rem;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.1) 0%, transparent 100%);
+        }
+
+        .hero h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        /* 天气卡片 */
+        .weather-section {
+            padding: 0 1rem;
+        }
+
+        .weather-card {
+            background: var(--surface);
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .city-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .city-select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            background: var(--surface-light);
+            color: var(--text);
+            font-size: 1rem;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.25rem;
+        }
+
+        .city-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.875rem 1rem;
+            border-radius: 0.75rem;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 天气显示 */
+        .weather-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .weather-icon {
+            font-size: 2.5rem;
+        }
+
+        .weather-info h2 {
+            font-size: 1.125rem;
+            margin-bottom: 0.125rem;
+        }
+
+        .weather-info p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+
+        .weather-detail {
+            background: var(--surface-light);
+            padding: 0.75rem 0.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+        }
+
+        .weather-detail-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .weather-detail-value {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* 推荐区域 */
+        .recommendations {
+            padding: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .outfit-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .outfit-card {
+            background: var(--surface);
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .outfit-header {
+            padding: 0.875rem 1rem;
+            background: var(--surface-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .outfit-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .outfit-score {
+            background: var(--gradient);
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .outfit-items {
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .outfit-item {
+            text-align: center;
+        }
+
+        .outfit-item-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 0.75rem;
+            background: var(--surface-light);
+            margin-bottom: 0.375rem;
+        }
+
+        .outfit-item-placeholder {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 0.75rem;
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.375rem;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .outfit-item-name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .outfit-item-type {
+            font-size: 0.65rem;
+            color: var(--primary);
+        }
+
+        .outfit-tips {
+            padding: 0.75rem 1rem;
+            background: rgba(99, 102, 241, 0.1);
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .outfit-missing {
+            padding: 0.75rem 1rem;
+            background: rgba(244, 63, 94, 0.1);
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--secondary);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.125rem;
+            margin-bottom: 0.375rem;
+            color: var(--text);
+        }
+
+        .empty-state p {
+            font-size: 0.875rem;
+        }
+
+        /* 加载状态 */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--surface-light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast通知 */
+        .toast {
+            position: fixed;
+            bottom: calc(80px + var(--safe-bottom));
+            left: 1rem;
+            right: 1rem;
+            padding: 0.875rem 1rem;
+            border-radius: 0.75rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { border-color: var(--success); }
+        .toast.error { border-color: var(--secondary); }
+
+        /* 大屏幕适配 */
+        @media (min-width: 768px) {
+            body {
+                padding-bottom: 0;
+            }
+
+            .navbar {
+                padding: 1rem 2rem;
+            }
+
+            .nav-content {
+                max-width: 1400px;
+                margin: 0 auto;
+                justify-content: space-between;
+            }
+
+            .desktop-nav {
+                display: flex;
+                gap: 1rem;
+            }
+
+            .nav-link {
+                padding: 0.5rem 1rem;
+                border-radius: 0.5rem;
+                color: var(--text-muted);
+                text-decoration: none;
+                transition: all 0.2s;
+            }
+
+            .nav-link:hover, .nav-link.active {
+                color: var(--text);
+                background: var(--surface);
+            }
+
+            .bottom-nav {
+                display: none;
+            }
+
+            .hero {
+                padding: 3rem 2rem;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.125rem;
+                max-width: 500px;
+                margin: 0 auto 1.5rem;
+            }
+
+            .weather-section {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 2rem;
+            }
+
+            .weather-card {
+                padding: 1.5rem;
+            }
+
+            .city-selector {
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .city-select {
+                flex: 1;
+                max-width: 300px;
+            }
+
+            .btn-row {
+                display: flex;
+                gap: 1rem;
+            }
+
+            .btn {
+                padding: 0.75rem 1.5rem;
+            }
+
+            .recommendations {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 2rem;
+            }
+
+            .outfit-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                gap: 1.5rem;
+            }
+
+            .toast {
+                left: auto;
+                right: 2rem;
+                bottom: 2rem;
+                max-width: 300px;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .desktop-nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">👔 智能穿搭助手</div>
+            <div class="desktop-nav">
+                <a href="/" class="nav-link active">穿搭推荐</a>
+                <a href="/wardrobe" class="nav-link">我的衣橱</a>
+                <a href="/upload" class="nav-link">添加衣物</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="main-content">
+        <section class="hero">
+            <h1>智能穿搭推荐</h1>
+            <p>根据实时天气，为您智能搭配今日穿搭</p>
+        </section>
+
+        <section class="weather-section">
+            <div class="weather-card">
+                <div class="city-selector">
+                    <select id="citySelect" class="city-select">
+                        <option value="">加载城市列表...</option>
+                    </select>
+                    <div class="btn-row">
+                        <button id="getWeatherBtn" class="btn btn-secondary">🌤️ 获取天气</button>
+                        <button id="getRecommendBtn" class="btn btn-primary">✨ 穿搭推荐</button>
+                    </div>
+                </div>
+
+                <div id="weatherContent" style="display: none;">
+                    <div class="weather-header">
+                        <span class="weather-icon" id="weatherIcon">☀️</span>
+                        <div class="weather-info">
+                            <h2 id="cityName">--</h2>
+                            <p id="weatherDesc">--</p>
+                        </div>
+                    </div>
+                    <div class="weather-details">
+                        <div class="weather-detail">
+                            <div class="weather-detail-label">温度</div>
+                            <div class="weather-detail-value" id="temperature">--°C</div>
+                        </div>
+                        <div class="weather-detail">
+                            <div class="weather-detail-label">湿度</div>
+                            <div class="weather-detail-value" id="humidity">--%</div>
+                        </div>
+                        <div class="weather-detail">
+                            <div class="weather-detail-label">风向</div>
+                            <div class="weather-detail-value" id="windDirection">--</div>
+                        </div>
+                        <div class="weather-detail">
+                            <div class="weather-detail-label">风力</div>
+                            <div class="weather-detail-value" id="windPower">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="weatherLoading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 0.75rem; color: var(--text-muted); font-size: 0.875rem;">获取天气中...</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="recommendations">
+            <h2 class="section-title">👗 今日穿搭推荐</h2>
+            
+            <div id="recommendLoading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p style="margin-top: 0.75rem; color: var(--text-muted); font-size: 0.875rem;">智能搭配中...</p>
+            </div>
+
+            <div id="recommendEmpty" class="empty-state">
+                <div class="empty-state-icon">👆</div>
+                <h3>选择城市获取推荐</h3>
+                <p>选择您所在的城市，我们将根据实时天气为您推荐穿搭</p>
+            </div>
+
+            <div id="outfitGrid" class="outfit-grid" style="display: none;"></div>
+        </section>
+    </main>
+
+    <!-- 底部导航栏 -->
+    <nav class="bottom-nav">
+        <a href="/" class="bottom-nav-item active">
+            <span class="bottom-nav-icon">✨</span>
+            <span class="bottom-nav-label">推荐</span>
+        </a>
+        <a href="/wardrobe" class="bottom-nav-item">
+            <span class="bottom-nav-icon">👗</span>
+            <span class="bottom-nav-label">衣橱</span>
+        </a>
+        <a href="/upload" class="bottom-nav-item">
+            <span class="bottom-nav-icon">➕</span>
+            <span class="bottom-nav-label">添加</span>
+        </a>
+    </nav>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const citySelect = document.getElementById('citySelect');
+        const getWeatherBtn = document.getElementById('getWeatherBtn');
+        const getRecommendBtn = document.getElementById('getRecommendBtn');
+        const weatherContent = document.getElementById('weatherContent');
+        const weatherLoading = document.getElementById('weatherLoading');
+        const recommendLoading = document.getElementById('recommendLoading');
+        const recommendEmpty = document.getElementById('recommendEmpty');
+        const outfitGrid = document.getElementById('outfitGrid');
+        const toast = document.getElementById('toast');
+
+        let currentWeather = null;
+
+        const weatherIcons = {
+            '晴': '☀️', '多云': '⛅', '阴': '☁️', '雨': '🌧️',
+            '小雨': '🌦️', '中雨': '🌧️', '大雨': '⛈️', '暴雨': '🌊',
+            '雪': '❄️', '小雪': '🌨️', '中雪': '❄️', '大雪': '🌨️',
+            '雾': '🌫️', '霾': '😷', '雷阵雨': '⛈️'
+        };
+
+        const clothingTypes = {
+            'tops': '👕 上衣', 'bottoms': '👖 下装', 'outerwear': '🧥 外套',
+            'shoes': '👟 鞋子', 'accessories': '🎒 配饰'
+        };
+
+        async function init() {
+            await loadCities();
+            citySelect.value = '上海市';
+        }
+
+        async function loadCities() {
+            try {
+                const response = await fetch('/api/weather/cities');
+                const cities = await response.json();
+                
+                citySelect.innerHTML = '<option value="">请选择城市</option>';
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+            } catch (error) {
+                showToast('加载城市列表失败', 'error');
+            }
+        }
+
+        async function getWeather() {
+            const city = citySelect.value;
+            if (!city) {
+                showToast('请先选择城市', 'error');
+                return;
+            }
+
+            weatherLoading.style.display = 'flex';
+            weatherContent.style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/weather/view?city=${encodeURIComponent(city)}`);
+                const data = await response.json();
+
+                if (data.status === '1' && data.lives && data.lives.length > 0) {
+                    currentWeather = data.lives[0];
+                    renderWeather(currentWeather);
+                    weatherContent.style.display = 'block';
+                } else {
+                    showToast('获取天气失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请重试', 'error');
+            } finally {
+                weatherLoading.style.display = 'none';
+            }
+        }
+
+        function renderWeather(weather) {
+            document.getElementById('cityName').textContent = `${weather.province} ${weather.city}`;
+            document.getElementById('weatherDesc').textContent = weather.weather;
+            document.getElementById('temperature').textContent = `${weather.temperature}°C`;
+            document.getElementById('humidity').textContent = `${weather.humidity}%`;
+            document.getElementById('windDirection').textContent = weather.winddirection;
+            document.getElementById('windPower').textContent = `${weather.windpower}级`;
+
+            const icon = Object.entries(weatherIcons).find(([key]) => weather.weather.includes(key));
+            document.getElementById('weatherIcon').textContent = icon ? icon[1] : '🌤️';
+        }
+
+        async function getRecommendation() {
+            const city = citySelect.value;
+            if (!city) {
+                showToast('请先选择城市', 'error');
+                return;
+            }
+
+            recommendLoading.style.display = 'flex';
+            recommendEmpty.style.display = 'none';
+            outfitGrid.style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/recommend?city=${encodeURIComponent(city)}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.weather) {
+                        currentWeather = data.weather;
+                        renderWeather(data.weather);
+                        weatherContent.style.display = 'block';
+                    }
+                    renderRecommendations(data.recommendations, data.tips);
+                    outfitGrid.style.display = 'flex';
+                } else {
+                    showToast(data.message || '获取推荐失败', 'error');
+                    recommendEmpty.style.display = 'block';
+                }
+            } catch (error) {
+                showToast('网络错误，请重试', 'error');
+                recommendEmpty.style.display = 'block';
+            } finally {
+                recommendLoading.style.display = 'none';
+            }
+        }
+
+        function renderRecommendations(recommendations, tips) {
+            if (!recommendations || recommendations.length === 0) {
+                outfitGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👕</div>
+                        <h3>衣橱空空如也</h3>
+                        <p>快去<a href="/upload" style="color: var(--primary);">添加衣物</a>吧！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            outfitGrid.innerHTML = recommendations.map((outfit, index) => `
+                <div class="outfit-card">
+                    <div class="outfit-header">
+                        <span class="outfit-title">推荐方案 ${index + 1}</span>
+                        <span class="outfit-score">${outfit.score}分</span>
+                    </div>
+                    <div class="outfit-items">
+                        ${Object.entries(outfit.items).map(([type, item]) => `
+                            <div class="outfit-item">
+                                ${item.image_path 
+                                    ? `<img src="/static/${item.image_path}" class="outfit-item-image" alt="${item.name}">`
+                                    : `<div class="outfit-item-placeholder">👔</div>`
+                                }
+                                <div class="outfit-item-name">${item.name}</div>
+                                <div class="outfit-item-type">${clothingTypes[type] || type}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ${outfit.tips ? `<div class="outfit-tips">💡 ${outfit.tips}</div>` : ''}
+                    ${outfit.missing && outfit.missing.length > 0 
+                        ? `<div class="outfit-missing">⚠️ 缺少: ${outfit.missing.join('、')}</div>` 
+                        : ''}
+                </div>
+            `).join('');
+        }
+
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        getWeatherBtn.addEventListener('click', getWeather);
+        getRecommendBtn.addEventListener('click', getRecommendation);
+        citySelect.addEventListener('change', () => {
+            weatherContent.style.display = 'none';
+            outfitGrid.style.display = 'none';
+            recommendEmpty.style.display = 'block';
+        });
+
+        init();
+    </script>
+</body>
+</html>

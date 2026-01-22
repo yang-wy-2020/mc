@@ -17,7 +17,6 @@ class SQL:
         self.charset = 'utf8mb4'
         self.cursor = None
 
-
     def connect(self) -> bool:
         """connect to the database"""
         print("connecting to database...")

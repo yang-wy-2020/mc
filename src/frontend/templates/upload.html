@@ -2,490 +2,696 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>图片上传</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>添加衣物 - 智能穿搭助手</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #f43f5e;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #475569;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text);
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            padding-bottom: calc(70px + var(--safe-bottom));
         }
 
-        /* 缩小界面至80% */
-        .upload-container {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
-            transition: transform 0.3s ease;
-            transform: scale(0.8); /* 缩小到80% */
-            transform-origin: center; /* 从中心缩放 */
-        }
-
-        .upload-container:hover {
-            transform: scale(0.8) translateY(-5px); /* 保持缩放比例的hover效果 */
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-weight: 600;
-            position: relative;
-            padding-bottom: 15px;
-        }
-
-        h1::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            border-radius: 3px;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* 文件上传样式 */
-        .file-upload {
-            position: relative;
-            margin-top: 10px;
-        }
-
-        .file-input {
-            position: absolute;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .file-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .file-label:hover {
-            background: #e9ecef;
-            border-color: #667eea;
-        }
-
-        /* 文件已选择样式 */
-        .file-label.file-selected {
-            border-style: solid;
-            border-color: #28a745;
-            background: rgba(40, 167, 69, 0.05);
-        }
-
-        .file-label.file-selected:hover {
-            border-color: #218838;
-            background: rgba(40, 167, 69, 0.1);
-        }
-
-        .file-icon {
-            font-size: 24px;
-            margin-right: 10px;
-            color: #667eea;
-        }
-
-        /* 文件已选择时的图标颜色 */
-        .file-selected .file-icon {
-            color: #28a745;
-        }
-
-        /* 文件名显示 */
-        .file-name {
-            font-weight: 500;
-            color: #333;
-        }
-
-        /* 输入框样式 */
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .input-label {
-            font-size: 14px;
-            color: #495057;
-            font-weight: 500;
-        }
-
-        .txt_input {
-            padding: 12px 15px;
-            border: 1px solid #ced4da;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .txt_input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-        }
-
-        .txt_input::placeholder {
-            color: #adb5bd;
-        }
-
-        /* 提交按钮样式 */
-        .button-new {
-            padding: 14px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .button-new:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .button-new:active {
-            transform: translateY(0);
-        }
-
-        /* 按钮加载状态 - 增强等待显示 */
-        .button-new.loading {
-            background: linear-gradient(90deg, #8e97d4, #9f7aea);
-            cursor: not-allowed;
-        }
-
-        .button-new.loading::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        /* 全屏加载遮罩 - 增强等待显示 */
-        .loading-overlay {
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1rem;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.5);
+            right: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
         }
 
-        .loading-overlay.show {
-            opacity: 1;
-            visibility: visible;
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .loading-spinner {
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 0;
+            padding-bottom: calc(0.5rem + var(--safe-bottom));
+            z-index: 100;
+        }
+
+        .bottom-nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+            min-width: 70px;
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(102, 126, 234, 0.2);
-            border-radius: 50%;
-            border-top-color: #667eea;
-            animation: spin 1s linear infinite;
+        .bottom-nav-item.active { color: var(--primary); }
+        .bottom-nav-item:active { transform: scale(0.95); }
+
+        .bottom-nav-icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+        .bottom-nav-label { font-size: 0.7rem; font-weight: 500; }
+
+        .main-content {
+            padding: 60px 1rem 1rem;
         }
 
-        .loading-text {
-            font-size: 16px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* 提示消息样式 - 居中显示 */
-        .message {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) translateY(10px);
-            padding: 20px 30px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
             text-align: center;
+            padding-top: 0.5rem;
+        }
+
+        .upload-form {
+            background: var(--surface);
+            border-radius: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .form-group { margin-bottom: 1.25rem; }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-label .required { color: var(--secondary); }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            background: var(--surface-light);
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-textarea { min-height: 80px; resize: vertical; }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 1rem;
+            padding: 2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--surface-light);
+        }
+
+        .upload-area:active {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .upload-area.has-image { padding: 0.75rem; }
+
+        .upload-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+        .upload-text { color: var(--text-muted); margin-bottom: 0.375rem; font-size: 0.9rem; }
+        .upload-hint { font-size: 0.75rem; color: var(--text-muted); }
+
+        #imageInput { display: none; }
+
+        .preview-container { position: relative; display: inline-block; }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 0.75rem;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.125rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 类型选项 - 更适合触摸 */
+        .type-options {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+        }
+
+        .type-option {
+            padding: 0.75rem 0.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            background: var(--surface-light);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .type-option:active { transform: scale(0.95); }
+
+        .type-option.selected {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--primary);
+        }
+
+        .type-option-icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+        .type-option-label { font-size: 0.7rem; }
+
+        /* 颜色选项 - 横向滚动 */
+        .color-scroll {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .color-scroll::-webkit-scrollbar { display: none; }
+
+        .color-option {
+            padding: 0.5rem 0.875rem;
+            border-radius: 2rem;
+            border: 1px solid var(--border);
+            background: var(--surface-light);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .color-option:active { transform: scale(0.95); }
+
+        .color-option.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* 温度范围 */
+        .temp-range {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .temp-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .temp-label {
+            width: 50px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .temp-slider-container { flex: 1; }
+
+        .temp-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--surface-light);
+            -webkit-appearance: none;
+        }
+
+        .temp-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+
+        .temp-value {
+            width: 55px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border-radius: 0.75rem;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            width: 100%;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .form-actions { margin-top: 1.5rem; }
+
+        .toast {
+            position: fixed;
+            bottom: calc(80px + var(--safe-bottom));
+            left: 1rem;
+            right: 1rem;
+            padding: 0.875rem 1rem;
+            border-radius: 0.75rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(100px);
             opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            z-index: 10000;
-            min-width: 300px;
-            max-width: 90%;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            z-index: 1000;
+            text-align: center;
         }
 
-        .message.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translate(-50%, -50%) translateY(0);
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-color: var(--success); }
+        .toast.error { border-color: var(--secondary); }
+
+        /* 大屏幕适配 */
+        @media (min-width: 768px) {
+            body { padding-bottom: 0; }
+
+            .navbar { padding: 1rem 2rem; }
+
+            .nav-content {
+                max-width: 1400px;
+                margin: 0 auto;
+                justify-content: space-between;
+            }
+
+            .desktop-nav { display: flex; gap: 1rem; }
+
+            .nav-link {
+                padding: 0.5rem 1rem;
+                border-radius: 0.5rem;
+                color: var(--text-muted);
+                text-decoration: none;
+                transition: all 0.2s;
+            }
+
+            .nav-link:hover, .nav-link.active {
+                color: var(--text);
+                background: var(--surface);
+            }
+
+            .bottom-nav { display: none; }
+
+            .main-content {
+                padding: 80px 2rem 2rem;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+
+            .page-title { font-size: 1.75rem; }
+
+            .upload-form { padding: 1.5rem; }
+
+            .type-options { gap: 0.75rem; }
+            .type-option { padding: 1rem 0.5rem; }
+            .type-option-icon { font-size: 2rem; }
+            .type-option-label { font-size: 0.8rem; }
+
+            .color-scroll { flex-wrap: wrap; overflow: visible; }
+
+            .temp-range { flex-direction: row; align-items: center; }
+            .temp-row { flex: 1; }
+            .temp-label { width: 40px; }
+
+            .toast {
+                left: auto;
+                right: 2rem;
+                bottom: 2rem;
+                max-width: 300px;
+            }
         }
 
-        .message.success {
-            background-color: rgba(40, 167, 69, 0.95);
-            color: white;
-            border: 1px solid #28a745;
-        }
-
-        .message.error {
-            background-color: rgba(220, 53, 69, 0.95);
-            color: white;
-            border: 1px solid #dc3545;
-        }
-
-        /* 响应式设计 */
-        @media (max-width: 480px) {
-            .upload-container {
-                padding: 25px 20px;
-                transform: scale(0.9); /* 移动端适当放大一点 */
-            }
-            
-            .upload-container:hover {
-                transform: scale(0.9) translateY(-5px);
-            }
-
-            h1 {
-                font-size: 22px;
-            }
-
-            .file-label {
-                padding: 12px;
-            }
-            
-            .message {
-                padding: 15px 20px;
-                font-size: 14px;
-                min-width: 250px;
-            }
+        @media (max-width: 767px) {
+            .desktop-nav { display: none; }
         }
     </style>
 </head>
 <body>
-    <!-- 加载遮罩层 -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="loading-spinner">
-            <div class="spinner"></div>
-            <div class="loading-text">正在处理，请稍候...</div>
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">👔 智能穿搭助手</div>
+            <div class="desktop-nav">
+                <a href="/" class="nav-link">穿搭推荐</a>
+                <a href="/wardrobe" class="nav-link">我的衣橱</a>
+                <a href="/upload" class="nav-link active">添加衣物</a>
+            </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="upload-container">
-        <h1>图片上传</h1>
-        <form id="uploadForm" action="" enctype='multipart/form-data' method='POST'>
-            <!-- 文件上传区域 -->
-            <div class="file-upload">
-                <input type="file" name="upload_file" id="upload_file" class="file-input" accept="image/*"/>
-                <label for="upload_file" class="file-label">
-                    <span class="file-icon">📁</span>
-                    <span class="file-text">点击选择图片文件</span>
-                    <span class="file-name" style="display: none;"></span>
-                </label>
+    <main class="main-content">
+        <h1 class="page-title">➕ 添加衣物</h1>
+        
+        <form class="upload-form" id="uploadForm">
+            <div class="form-group">
+                <label class="form-label">衣物图片 <span class="required">*</span></label>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text">点击上传图片</div>
+                    <div class="upload-hint">支持 PNG、JPG 格式</div>
+                </div>
+                <input type="file" id="imageInput" accept="image/*">
             </div>
 
-            <!-- 选项输入区域 -->
-            <div class="input-group">
-                <label class="input-label">选项1</label>
-                <input type="text" class="txt_input" name="选项1" placeholder="请输入选项1内容"/>
+            <div class="form-group">
+                <label class="form-label" for="name">衣物名称 <span class="required">*</span></label>
+                <input type="text" id="name" class="form-input" placeholder="如：白色T恤、牛仔裤" required>
             </div>
 
-            <div class="input-group">
-                <label class="input-label">选项2</label>
-                <input type="text" class="txt_input" name="选项2" placeholder="请输入选项2内容"/>
+            <div class="form-group">
+                <label class="form-label">衣物类型 <span class="required">*</span></label>
+                <div class="type-options" id="typeOptions">
+                    <div class="type-option" data-value="tops">
+                        <div class="type-option-icon">👕</div>
+                        <div class="type-option-label">上衣</div>
+                    </div>
+                    <div class="type-option" data-value="bottoms">
+                        <div class="type-option-icon">👖</div>
+                        <div class="type-option-label">下装</div>
+                    </div>
+                    <div class="type-option" data-value="outerwear">
+                        <div class="type-option-icon">🧥</div>
+                        <div class="type-option-label">外套</div>
+                    </div>
+                    <div class="type-option" data-value="shoes">
+                        <div class="type-option-icon">👟</div>
+                        <div class="type-option-label">鞋子</div>
+                    </div>
+                    <div class="type-option" data-value="accessories">
+                        <div class="type-option-icon">🎒</div>
+                        <div class="type-option-label">配饰</div>
+                    </div>
+                </div>
+                <input type="hidden" id="type" required>
             </div>
 
-            <div class="input-group">
-                <label class="input-label">选项3</label>
-                <input type="text" class="txt_input" name="选项3" placeholder="请输入选项3内容"/>
+            <div class="form-group">
+                <label class="form-label">颜色</label>
+                <div class="color-scroll" id="colorOptions">
+                    <span class="color-option" data-value="black">黑色</span>
+                    <span class="color-option" data-value="white">白色</span>
+                    <span class="color-option" data-value="gray">灰色</span>
+                    <span class="color-option" data-value="red">红色</span>
+                    <span class="color-option" data-value="blue">蓝色</span>
+                    <span class="color-option" data-value="green">绿色</span>
+                    <span class="color-option" data-value="yellow">黄色</span>
+                    <span class="color-option" data-value="pink">粉色</span>
+                    <span class="color-option" data-value="purple">紫色</span>
+                    <span class="color-option" data-value="brown">棕色</span>
+                    <span class="color-option" data-value="beige">米色</span>
+                    <span class="color-option" data-value="navy">藏青</span>
+                </div>
+                <input type="hidden" id="color">
             </div>
 
-            <div class="input-group">
-                <label class="input-label">选项4</label>
-                <input type="text" class="txt_input" name="选项4" placeholder="请输入选项4内容"/>
+            <div class="form-group">
+                <label class="form-label" for="style">风格</label>
+                <select id="style" class="form-select">
+                    <option value="">不指定</option>
+                    <option value="casual">休闲</option>
+                    <option value="formal">正式</option>
+                    <option value="sporty">运动</option>
+                    <option value="elegant">优雅</option>
+                </select>
             </div>
 
-            <div class="input-group">
-                <label class="input-label">选项5</label>
-                <input type="text" class="txt_input" name="选项5" placeholder="请输入选项5内容"/>
+            <div class="form-group">
+                <label class="form-label">适合温度范围</label>
+                <div class="temp-range">
+                    <div class="temp-row">
+                        <span class="temp-label">最低</span>
+                        <div class="temp-slider-container">
+                            <input type="range" id="tempMin" class="temp-slider" min="-20" max="40" value="10">
+                        </div>
+                        <div class="temp-value" id="tempMinValue">10°C</div>
+                    </div>
+                    <div class="temp-row">
+                        <span class="temp-label">最高</span>
+                        <div class="temp-slider-container">
+                            <input type="range" id="tempMax" class="temp-slider" min="-20" max="40" value="30">
+                        </div>
+                        <div class="temp-value" id="tempMaxValue">30°C</div>
+                    </div>
+                </div>
             </div>
 
-            <!-- 提交按钮 -->
-            <input type="submit" value="提交" class="button-new"/>
-            
-            <!-- 提示消息区域 -->
-            <div id="message" class="message"></div>
+            <div class="form-group">
+                <label class="form-label" for="description">描述（可选）</label>
+                <textarea id="description" class="form-textarea" placeholder="添加描述..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span id="btnText">✨ 添加到衣橱</span>
+                </button>
+            </div>
         </form>
-    </div>
+    </main>
+
+    <!-- 底部导航栏 -->
+    <nav class="bottom-nav">
+        <a href="/" class="bottom-nav-item">
+            <span class="bottom-nav-icon">✨</span>
+            <span class="bottom-nav-label">推荐</span>
+        </a>
+        <a href="/wardrobe" class="bottom-nav-item">
+            <span class="bottom-nav-icon">👗</span>
+            <span class="bottom-nav-label">衣橱</span>
+        </a>
+        <a href="/upload" class="bottom-nav-item active">
+            <span class="bottom-nav-icon">➕</span>
+            <span class="bottom-nav-label">添加</span>
+        </a>
+    </nav>
+
+    <div id="toast" class="toast"></div>
 
     <script>
-        // 获取DOM元素
-        const fileInput = document.getElementById('upload_file');
-        const fileLabel = document.querySelector('.file-label');
-        const fileText = document.querySelector('.file-text');
-        const fileName = document.querySelector('.file-name');
         const uploadForm = document.getElementById('uploadForm');
-        const submitButton = document.querySelector('.button-new');
-        const message = document.getElementById('message');
-        const loadingOverlay = document.getElementById('loadingOverlay');
+        const uploadArea = document.getElementById('uploadArea');
+        const imageInput = document.getElementById('imageInput');
+        const typeOptions = document.getElementById('typeOptions');
+        const colorOptions = document.getElementById('colorOptions');
+        const tempMin = document.getElementById('tempMin');
+        const tempMax = document.getElementById('tempMax');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const toast = document.getElementById('toast');
 
-        // 文件选择事件 - 改变边框样式并显示文件名
-        fileInput.addEventListener('change', function(e) {
-            const files = this.files;
-            if (files.length > 0) {
-                // 添加已选择样式
-                fileLabel.classList.add('file-selected');
-                // 隐藏默认文本，显示文件名
-                fileText.style.display = 'none';
-                fileName.style.display = 'inline';
-                fileName.textContent = files[0].name;
-                
-                // 如果文件名过长，进行截断
-                if (files[0].name.length > 20) {
-                    const name = files[0].name;
-                    const ext = name.split('.').pop();
-                    const mainName = name.substring(0, 15);
-                    fileName.textContent = `${mainName}...${ext}`;
-                }
-            } else {
-                // 恢复默认样式
-                fileLabel.classList.remove('file-selected');
-                fileText.style.display = 'inline';
-                fileName.style.display = 'none';
+        let selectedImage = null;
+        let selectedType = '';
+        let selectedColor = '';
+
+        uploadArea.addEventListener('click', () => imageInput.click());
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleImage(e.target.files[0]);
             }
         });
 
-        // 表单提交处理
-        uploadForm.addEventListener('submit', async function(e) {
-            e.preventDefault(); // 阻止默认提交
-            
-            // 验证是否选择了文件
-            if (!fileInput.files.length) {
-                showMessage('请先选择要上传的图片文件', 'error');
+        function handleImage(file) {
+            selectedImage = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadArea.innerHTML = `
+                    <div class="preview-container">
+                        <img src="${e.target.result}" class="preview-image" alt="预览">
+                        <button type="button" class="remove-image" onclick="removeImage(event)">×</button>
+                    </div>
+                `;
+                uploadArea.classList.add('has-image');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage(e) {
+            e.stopPropagation();
+            selectedImage = null;
+            imageInput.value = '';
+            uploadArea.innerHTML = `
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">点击上传图片</div>
+                <div class="upload-hint">支持 PNG、JPG 格式</div>
+            `;
+            uploadArea.classList.remove('has-image');
+        }
+
+        typeOptions.querySelectorAll('.type-option').forEach(option => {
+            option.addEventListener('click', () => {
+                typeOptions.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedType = option.dataset.value;
+                document.getElementById('type').value = selectedType;
+            });
+        });
+
+        colorOptions.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                colorOptions.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedColor = option.dataset.value;
+                document.getElementById('color').value = selectedColor;
+            });
+        });
+
+        tempMin.addEventListener('input', () => {
+            document.getElementById('tempMinValue').textContent = `${tempMin.value}°C`;
+            if (parseInt(tempMin.value) > parseInt(tempMax.value)) {
+                tempMax.value = tempMin.value;
+                document.getElementById('tempMaxValue').textContent = `${tempMax.value}°C`;
+            }
+        });
+
+        tempMax.addEventListener('input', () => {
+            document.getElementById('tempMaxValue').textContent = `${tempMax.value}°C`;
+            if (parseInt(tempMax.value) < parseInt(tempMin.value)) {
+                tempMin.value = tempMax.value;
+                document.getElementById('tempMinValue').textContent = `${tempMin.value}°C`;
+            }
+        });
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!selectedImage) {
+                showToast('请上传衣物图片', 'error');
                 return;
             }
 
-            // 设置按钮加载状态
-            submitButton.classList.add('loading');
-            submitButton.value = '提交中...';
-            submitButton.disabled = true;
-            
-            // 显示全屏加载遮罩
-            loadingOverlay.classList.add('show');
-            
-            // 清空之前的消息
-            hideMessage();
+            if (!selectedType) {
+                showToast('请选择衣物类型', 'error');
+                return;
+            }
+
+            const name = document.getElementById('name').value.trim();
+            if (!name) {
+                showToast('请输入衣物名称', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            btnText.textContent = '上传中...';
+
+            const formData = new FormData();
+            formData.append('image', selectedImage);
+            formData.append('name', name);
+            formData.append('type', selectedType);
+            formData.append('color', selectedColor);
+            formData.append('style', document.getElementById('style').value);
+            formData.append('temp_min', tempMin.value);
+            formData.append('temp_max', tempMax.value);
+            formData.append('description', document.getElementById('description').value);
 
             try {
-                // 创建FormData对象
-                const formData = new FormData(this);
-                
-                // 发送AJAX请求到后端
-                const response = await fetch(this.action || window.location.href, {
+                const response = await fetch('/api/clothing', {
                     method: 'POST',
                     body: formData
                 });
 
-                // 解析响应（根据后端返回格式调整，这里假设返回JSON）
-                const result = await response.json();
-                
-                // 根据后端返回结果显示消息
-                if (result.success) {
-                    showMessage(result.message || '上传成功！页面即将刷新...', 'success');
-                    // 成功后延迟刷新页面（让用户看到成功提示）
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('添加成功！', 'success');
                     setTimeout(() => {
-                        window.location.reload(true); // 强制刷新页面
+                        window.location.href = '/wardrobe';
                     }, 1500);
                 } else {
-                    showMessage(result.message || '上传失败，请重试', 'error');
+                    showToast(data.message || '添加失败', 'error');
                 }
-
             } catch (error) {
-                console.error('上传出错:', error);
-                showMessage('网络错误，上传失败', 'error');
+                showToast('网络错误，请重试', 'error');
             } finally {
-                // 恢复按钮状态
-                submitButton.classList.remove('loading');
-                submitButton.value = '提交';
-                submitButton.disabled = false;
-                
-                // 隐藏加载遮罩
-                loadingOverlay.classList.remove('show');
+                submitBtn.disabled = false;
+                btnText.textContent = '✨ 添加到衣橱';
             }
         });
 
-        // 显示提示消息（居中显示）
-        function showMessage(text, type) {
-            message.textContent = text;
-            message.className = `message ${type} show`;
-            
-            // 错误消息5秒后自动隐藏，成功消息不需要（因为会刷新）
-            if (type === 'error') {
-                setTimeout(() => {
-                    hideMessage();
-                }, 5000);
-            }
-        }
-
-        // 隐藏提示消息
-        function hideMessage() {
-            message.className = 'message';
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
     </script>
 </body>

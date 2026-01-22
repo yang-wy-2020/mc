@@ -1,0 +1,5 @@
+# 智能穿搭推荐系统依赖
+flask>=2.0.0
+werkzeug>=2.0.0
+requests>=2.25.0
+openpyxl>=3.0.0
